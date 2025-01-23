@@ -74,11 +74,38 @@ public class TelemetryTests {
         assertEquals("gyroscope", retrievedEntity.get().getType());
         assertEquals("Mock Data", retrievedEntity.get().getData());
     }
+    @Test
+    public void testMissingField() {
+        TelemetryController.GpsData invalidData = new TelemetryController.GpsData();
+        invalidData.setLatitude(-23.55052);
+        // Longitude is not set to simulate validation error
+
+        Exception exception = assertThrows(Exception.class, () -> {
+            telemetryController.receiveGpsData(invalidData);
+        });
+
+        String expectedMessage = "Erro de validação:";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
+    @Test
+    public void testBadRequest() {
+        TelemetryController.GpsData invalidData = new TelemetryController.GpsData();
+        invalidData.setLatitude(-23.55052);
+        // Longitude is not set to simulate validation error
+
+        ResponseEntity<String> response = null;
+        try {
+            response = telemetryController.receiveGpsData(invalidData);
+        } catch (Exception e) {
+            assertEquals(HttpStatus.BAD_REQUEST.value(), 400);
+        }
+    }
 
     @Test
     public void testValidationErrorHandling() {
         TelemetryController.GyroscopeData invalidData = new TelemetryController.GyroscopeData();
-        // Not setting required fields to simulate validation error
 
         Exception exception = assertThrows(Exception.class, () -> {
             telemetryController.receiveGyroscopeData(invalidData);
