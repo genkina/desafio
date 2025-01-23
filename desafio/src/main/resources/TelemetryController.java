@@ -25,12 +25,48 @@ public class TelemetryController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Dados do GPS processados com sucesso.");
     }
 
-    // Endpoint para dados da foto
     @PostMapping("/photo")
     public ResponseEntity<String> receivePhotoData(@Valid @RequestBody PhotoData data) {
-        // Lógica para processar os dados da foto
-        saveData("photo" , data.toString());
-        return ResponseEntity.status(HttpStatus.CREATED).body("Dados da foto processados com sucesso.");
+        String collectionId = "telemetry-photos";
+        RekognitionClient rekognitionClient = RekognitionClient.create();
+
+        try {
+            // Criar a coleção de exemplo
+            rekognitionClient.createCollection(CreateCollectionRequest.builder().collectionId(collectionId).build());
+
+            // Adicionar imagem à coleção
+            IndexFacesResponse indexResponse = rekognitionClient.indexFaces(IndexFacesRequest.builder()
+                    .collectionId(collectionId)
+                    .image(Image.builder().bytes(SdkBytes.fromBase64String(data.getPhotoBase64())).build())
+                    .externalImageId("photo-" + System.currentTimeMillis())
+                    .build());
+
+            // Obter os metadados das faces indexadas
+            List<FaceRecord> faceRecords = indexResponse.faceRecords();
+            if (!faceRecords.isEmpty()) {
+                System.out.println("Face adicionada com sucesso à coleção.");
+            }
+
+            // Comparar imagem com as existentes na coleção
+            SearchFacesByImageResponse searchResponse = rekognitionClient.searchFacesByImage(SearchFacesByImageRequest.builder()
+                    .collectionId(collectionId)
+                    .image(Image.builder().bytes(SdkBytes.fromBase64String(data.getPhotoBase64())).build())
+                    .build());
+
+            if (!searchResponse.faceMatches().isEmpty()) {
+                System.out.println("Correspondências encontradas:");
+                searchResponse.faceMatches().forEach(match ->
+                        System.out.println("FaceId: " + match.face().faceId() + ", Similarity: " + match.similarity()));
+                return ResponseEntity.ok("Correspondências encontradas!");
+            } else {
+                System.out.println("Nenhuma correspondência encontrada.");
+                return ResponseEntity.ok("Nenhuma correspondência encontrada.");
+            }
+
+        } catch (RekognitionException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar a imagem.");
+        }
     }
 
     private void saveData(String type, String data) {
