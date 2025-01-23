@@ -13,7 +13,7 @@ public class TelemetryController {
     @PostMapping("/gyroscope")
     public ResponseEntity<String> receiveGyroscopeData(@Valid @RequestBody GyroscopeData data) {
         // Lógica para processar os dados do giroscópio
-        System.out.println("Dados do giroscópio recebidos: " + data);
+        saveData("gyroscope", data.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body("Dados do giroscópio processados com sucesso.");
     }
 
@@ -21,7 +21,7 @@ public class TelemetryController {
     @PostMapping("/gps")
     public ResponseEntity<String> receiveGpsData(@Valid @RequestBody GpsData data) {
         // Lógica para processar os dados do GPS
-        System.out.println("Dados do GPS recebidos: " + data);
+        saveData("gps", data.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body("Dados do GPS processados com sucesso.");
     }
 
@@ -29,8 +29,15 @@ public class TelemetryController {
     @PostMapping("/photo")
     public ResponseEntity<String> receivePhotoData(@Valid @RequestBody PhotoData data) {
         // Lógica para processar os dados da foto
-        System.out.println("Dados da foto recebidos: " + data);
+        saveData("photo" , data.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body("Dados da foto processados com sucesso.");
+    }
+
+    private void saveData(String type, String data) {
+        TelemetryEntity entity = new TelemetryEntity();
+        entity.setType(type);
+        entity.setData(data);
+        telemetryRepository.save(entity);
     }
 
     public static class GyroscopeData {
