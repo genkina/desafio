@@ -30,4 +30,93 @@ public class TelemetryController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Dados da foto processados com sucesso.");
     }
 
+    public static class GyroscopeData {
+        private double x;
+        private double y;
+        private double z;
+
+
+        public double getX() {
+            return x;
+        }
+
+        public void setX(double x) {
+            this.x = x;
+        }
+
+        public double getY() {
+            return y;
+        }
+
+        public void setY(double y) {
+            this.y = y;
+        }
+
+        public double getZ() {
+            return z;
+        }
+
+        public void setZ(double z) {
+            this.z = z;
+        }
+
+        @Override
+        public String toString() {
+            return "GyroscopeData{" +
+                    "x=" + x +
+                    ", y=" + y +
+                    ", z=" + z +
+                    '}';
+        }
+    }
+
+    public static class GpsData {
+        private double latitude;
+        private double longitude;
+
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(double latitude) {
+            this.latitude = latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(double longitude) {
+            this.longitude = longitude;
+        }
+
+        @Override
+        public String toString() {
+            return "GpsData{" +
+                    "latitude=" + latitude +
+                    ", longitude=" + longitude +
+                    '}';
+        }
+    }
+
+    public static class PhotoData {
+        private String photoBase64;
+
+        
+        public String getPhotoBase64() {
+            return photoBase64;
+        }
+
+        public void setPhotoBase64(String photoBase64) {
+            this.photoBase64 = photoBase64;
+        }
+
+        @Override
+        public String toString() {
+            return "PhotoData{" +
+                    "photoBase64='" + photoBase64 + '\'' +
+                    '}';
+        }
+    }
 }
