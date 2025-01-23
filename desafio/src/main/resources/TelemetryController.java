@@ -26,26 +26,20 @@ public class TelemetryController {
     }
 
     @PostMapping("/photo")
-    public ResponseEntity<String> receivePhotoData(@Valid @RequestBody PhotoData data) {
+    public ResponseEntity<Map<String, Object>> receivePhotoData(@Valid @RequestBody PhotoData data) {
         String collectionId = "telemetry-photos";
         RekognitionClient rekognitionClient = RekognitionClient.create();
 
         try {
-            // Criar a coleção de exemplo
+            // Criar a coleção se não existir
             rekognitionClient.createCollection(CreateCollectionRequest.builder().collectionId(collectionId).build());
 
             // Adicionar imagem à coleção
-            IndexFacesResponse indexResponse = rekognitionClient.indexFaces(IndexFacesRequest.builder()
+            rekognitionClient.indexFaces(IndexFacesRequest.builder()
                     .collectionId(collectionId)
                     .image(Image.builder().bytes(SdkBytes.fromBase64String(data.getPhotoBase64())).build())
                     .externalImageId("photo-" + System.currentTimeMillis())
                     .build());
-
-            // Obter os metadados das faces indexadas
-            List<FaceRecord> faceRecords = indexResponse.faceRecords();
-            if (!faceRecords.isEmpty()) {
-                System.out.println("Face adicionada com sucesso à coleção.");
-            }
 
             // Comparar imagem com as existentes na coleção
             SearchFacesByImageResponse searchResponse = rekognitionClient.searchFacesByImage(SearchFacesByImageRequest.builder()
@@ -53,21 +47,45 @@ public class TelemetryController {
                     .image(Image.builder().bytes(SdkBytes.fromBase64String(data.getPhotoBase64())).build())
                     .build());
 
+            Map<String, Object> response = new HashMap<>();
+            response.put("recognized", !searchResponse.faceMatches().isEmpty());
+
             if (!searchResponse.faceMatches().isEmpty()) {
                 System.out.println("Correspondências encontradas:");
                 searchResponse.faceMatches().forEach(match ->
                         System.out.println("FaceId: " + match.face().faceId() + ", Similarity: " + match.similarity()));
-                return ResponseEntity.ok("Correspondências encontradas!");
+                response.put("message", "Correspondências encontradas!");
             } else {
                 System.out.println("Nenhuma correspondência encontrada.");
-                return ResponseEntity.ok("Nenhuma correspondência encontrada.");
+                response.put("message", "Nenhuma correspondência encontrada.");
             }
 
-        } catch (RekognitionException e) {
+            return ResponseEntity.ok(response);
+
+        }
+        try {
+            if (!searchResponse.faceMatches().isEmpty()) {
+                System.out.println("Correspondências encontradas:");
+                searchResponse.faceMatches().forEach(match ->
+                        System.out.println("FaceId: " + match.face().faceId() + ", Similarity: " + match.similarity()));
+                response.put("message", "Correspondências encontradas!");
+            } else {
+                System.out.println("Nenhuma correspondência encontrada.");
+                response.put("message", "Nenhuma correspondência encontrada.");
+            }
+
+            return ResponseEntity.ok(response);
+
+        }
+        catch (RekognitionException e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao processar a imagem.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "recognized", false,
+                    "message", "Erro ao processar a imagem."
+            ));
         }
     }
+
 
     private void saveData(String type, String data) {
         TelemetryEntity entity = new TelemetryEntity();
