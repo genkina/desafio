@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    image: openjdk:21
+    container_name: telemetry_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:tcp://db:1521/mem:testdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=password
+
+  db:
+    image: oscarfonts/h2:latest
+    container_name: h2_database
+    ports:
+      - "1521:1521"
+    environment:
+      - H2_OPTIONS=-ifNotExists
+
+networks:
+  default:
+    driver: bridge
